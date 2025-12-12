@@ -1,11 +1,11 @@
 import random
 import time
 import copy
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 
 class SortingAlgorithms:
-    def __init__(self, data: List = []):
+    def __init__(self, data: Optional[List] = None):
         self.data = data
         self.comparisons = 0
         self.swaps = 0
