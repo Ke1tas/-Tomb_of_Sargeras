@@ -6,6 +6,7 @@ from typing import List, Tuple, Any
 import math
 import copy
 
+
 class sortingAlgorithms:
     def __init__(self, data: List = []):
         self.data = data
@@ -226,19 +227,19 @@ class sortingAlgorithms:
         n = len(arr)
         gap = n
         shrink = 1.3
-        sorted = False
-        while not sorted:
+        sorted_flag = False
+        while not sorted_flag:
             gap = int(gap / shrink)
             if gap <= 1:
                 gap = 1
-                sorted = True
+                sorted_flag = True
             i = 0
             while i + gap < n:
                 self.comparisons += 1
                 if arr[i] > arr[i + gap]:
                     arr[i], arr[i + gap] = arr[i + gap], arr[i]
                     self.swaps += 1
-                    sorted = False
+                    sorted_flag = False
                 i += 1
         return arr
 
@@ -274,7 +275,7 @@ class SortingBenchmark:
         return [random.randint(min_val, max_val) for _ in range(size)]
 
     def benchmark_algorithm(self, algo_name: str, sort_func,
-                           arr: List) -> dict:
+                            arr: List) -> dict:
         test_arr = copy.deepcopy(arr)
         sorter = sortingAlgorithms(test_arr)
         start_time = time.time()
@@ -330,6 +331,7 @@ def main():
     print(f"Quick Sort: {quick_data}")
     benchmark = SortingBenchmark()
     benchmark.run_benchmarks(50)
+
 
 if __name__ == "__main__":
     main()
