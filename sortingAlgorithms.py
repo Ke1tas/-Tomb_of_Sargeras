@@ -6,7 +6,6 @@ from typing import List, Tuple, Any
 import math
 import copy
 
-
 class sortingAlgorithms:
     def __init__(self, data: List = []):
         self.data = data
@@ -136,7 +135,8 @@ class sortingAlgorithms:
         return arr
 
     def countingSort(self, arr: List) -> List:
-        if not arr: return arr
+        if not arr:
+            return arr
         max_val = max(arr)
         min_val = min(arr)
         range_of_elements = max_val - min_val + 1
@@ -152,7 +152,8 @@ class sortingAlgorithms:
         return output
 
     def radixSort(self, arr: List) -> List:
-        if not arr: return arr
+        if not arr:
+            return arr
         max_val = max(arr)
         exp = 1
         while max_val // exp > 0:
@@ -179,7 +180,8 @@ class sortingAlgorithms:
             arr[i] = output[i]
 
     def bucketSort(self, arr: List) -> List:
-        if not arr: return arr
+        if not arr:
+            return arr
         bucket_count = 10
         max_val = max(arr)
         min_val = min(arr)
@@ -207,7 +209,8 @@ class sortingAlgorithms:
                     arr[i], arr[i + 1] = arr[i + 1], arr[i]
                     swapped = True
                     self.swaps += 1
-            if not swapped: break
+            if not swapped:
+                break
             swapped = False
             end -= 1
             for i in range(end - 1, start - 1, -1):
@@ -266,10 +269,12 @@ class SortingBenchmark:
     def __init__(self):
         self.results = {}
 
-    def generate_random_array(self, size: int, min_val: int = 0, max_val: int = 1000) -> List[int]:
+    def generate_random_array(self, size: int, min_val: int = 0,
+                              max_val: int = 1000) -> List[int]:
         return [random.randint(min_val, max_val) for _ in range(size)]
 
-    def benchmark_algorithm(self, algo_name: str, sort_func, arr: List) -> dict:
+    def benchmark_algorithm(self, algo_name: str, sort_func,
+                           arr: List) -> dict:
         test_arr = copy.deepcopy(arr)
         sorter = sortingAlgorithms(test_arr)
         start_time = time.time()
@@ -279,21 +284,34 @@ class SortingBenchmark:
             result = sort_func(sorter, test_arr)
         end_time = time.time()
         comparisons, swaps = sorter.get_stats()
-        return {"time": end_time - start_time, "comparisons": comparisons, "swaps": swaps}
+        return {"time": end_time - start_time,
+                "comparisons": comparisons,
+                "swaps": swaps}
 
     def run_benchmarks(self, array_size: int = 100) -> None:
         test_array = self.generate_random_array(array_size)
         sorter = sortingAlgorithms()
-        algorithms = {"BubbleSort": sorter.BubbleSort, "QuickSort": sorter.quickSort, "MergeSort": sorter.mergeSort,
-                      "HeapSort": sorter.heapSort, "InsertionSort": sorter.insertionSort,
-                      "SelectionSort": sorter.selectionSort, "ShellSort": sorter.shellSort,
-                      "CocktailSort": sorter.cocktailSort, "CombSort": sorter.combSort, "GnomeSort": sorter.gnomeSort}
+        algorithms = {
+            "BubbleSort": sorter.BubbleSort,
+            "QuickSort": sorter.quickSort,
+            "MergeSort": sorter.mergeSort,
+            "HeapSort": sorter.heapSort,
+            "InsertionSort": sorter.insertionSort,
+            "SelectionSort": sorter.selectionSort,
+            "ShellSort": sorter.shellSort,
+            "CocktailSort": sorter.cocktailSort,
+            "CombSort": sorter.combSort,
+            "GnomeSort": sorter.gnomeSort
+        }
         print(f"Running benchmarks on array of size {array_size}...")
         for name, func in algorithms.items():
             print(f"Testing {name}...")
             result = self.benchmark_algorithm(name, func, test_array)
             self.results[name] = result
-            print(f"{name}: Time={result['time']:.6f}s, Comparisons={result['comparisons']}, Swaps={result['swaps']}")
+            stat_str = f"{name}: Time={result['time']:.6f}s, "
+            stat_str += f"Comparisons={result['comparisons']}, "
+            stat_str += f"Swaps={result['swaps']}"
+            print(stat_str)
 
 
 def main():
@@ -312,7 +330,6 @@ def main():
     print(f"Quick Sort: {quick_data}")
     benchmark = SortingBenchmark()
     benchmark.run_benchmarks(50)
-
 
 if __name__ == "__main__":
     main()
