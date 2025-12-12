@@ -1,6 +1,10 @@
-import sys,os,random,time
+import sys
+import os
+import random
+import time
 from typing import List,Tuple,Any
-import math,copy
+import math
+import copy
 
 class sortingAlgorithms:
     def __init__(self,data:List=[]):
