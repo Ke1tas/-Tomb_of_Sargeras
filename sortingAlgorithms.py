@@ -44,26 +44,26 @@ class SortingAlgorithms:
     def merge_sort(self, arr: List) -> List:
         if len(arr) > 1:
             mid = len(arr) // 2
-            L = arr[:mid]
-            R = arr[mid:]
-            self.merge_sort(L)
-            self.merge_sort(R)
+            left = arr[:mid]
+            right = arr[mid:]
+            self.merge_sort(left)
+            self.merge_sort(right)
             i = j = k = 0
-            while i < len(L) and j < len(R):
+            while i < len(left) and j < len(right):
                 self.comparisons += 1
-                if L[i] < R[j]:
-                    arr[k] = L[i]
+                if left[i] < right[j]:
+                    arr[k] = left[i]
                     i += 1
                 else:
-                    arr[k] = R[j]
+                    arr[k] = right[j]
                     j += 1
                 k += 1
-            while i < len(L):
-                arr[k] = L[i]
+            while i < len(left):
+                arr[k] = left[i]
                 i += 1
                 k += 1
-            while j < len(R):
-                arr[k] = R[j]
+            while j < len(right):
+                arr[k] = right[j]
                 j += 1
                 k += 1
         return arr
@@ -80,16 +80,16 @@ class SortingAlgorithms:
 
     def _heapify(self, arr: List, n: int, i: int) -> None:
         largest = i
-        l = 2 * i + 1
-        r = 2 * i + 2
-        if l < n:
+        left = 2 * i + 1
+        right = 2 * i + 2
+        if left < n:
             self.comparisons += 1
-            if arr[l] > arr[largest]:
-                largest = l
-        if r < n:
+            if arr[left] > arr[largest]:
+                largest = left
+        if right < n:
             self.comparisons += 1
-            if arr[r] > arr[largest]:
-                largest = r
+            if arr[right] > arr[largest]:
+                largest = right
         if largest != i:
             arr[i], arr[largest] = arr[largest], arr[i]
             self.swaps += 1
