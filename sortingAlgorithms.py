@@ -6,14 +6,13 @@ from typing import List, Tuple, Any
 import math
 import copy
 
-
-class sortingAlgorithms:
+class SortingAlgorithms:
     def __init__(self, data: List = []):
         self.data = data
         self.comparisons = 0
         self.swaps = 0
 
-    def BubbleSort(self, arr: List) -> List:
+    def bubble_sort(self, arr: List) -> List:
         n = len(arr)
         for i in range(n):
             for j in range(0, n - i - 1):
@@ -23,11 +22,11 @@ class sortingAlgorithms:
                     self.swaps += 1
         return arr
 
-    def quickSort(self, arr: List, low: int, high: int) -> None:
+    def quick_sort(self, arr: List, low: int, high: int) -> None:
         if low < high:
             pi = self._partition(arr, low, high)
-            self.quickSort(arr, low, pi - 1)
-            self.quickSort(arr, pi + 1, high)
+            self.quick_sort(arr, low, pi - 1)
+            self.quick_sort(arr, pi + 1, high)
 
     def _partition(self, arr: List, low: int, high: int) -> int:
         pivot = arr[high]
@@ -42,13 +41,13 @@ class sortingAlgorithms:
         self.swaps += 1
         return i + 1
 
-    def mergeSort(self, arr: List) -> List:
+    def merge_sort(self, arr: List) -> List:
         if len(arr) > 1:
             mid = len(arr) // 2
             L = arr[:mid]
             R = arr[mid:]
-            self.mergeSort(L)
-            self.mergeSort(R)
+            self.merge_sort(L)
+            self.merge_sort(R)
             i = j = k = 0
             while i < len(L) and j < len(R):
                 self.comparisons += 1
@@ -69,7 +68,7 @@ class sortingAlgorithms:
                 k += 1
         return arr
 
-    def heapSort(self, arr: List) -> List:
+    def heap_sort(self, arr: List) -> List:
         n = len(arr)
         for i in range(n // 2 - 1, -1, -1):
             self._heapify(arr, n, i)
@@ -96,7 +95,7 @@ class sortingAlgorithms:
             self.swaps += 1
             self._heapify(arr, n, largest)
 
-    def insertionSort(self, arr: List) -> List:
+    def insertion_sort(self, arr: List) -> List:
         for i in range(1, len(arr)):
             key = arr[i]
             j = i - 1
@@ -108,7 +107,7 @@ class sortingAlgorithms:
             arr[j + 1] = key
         return arr
 
-    def selectionSort(self, arr: List) -> List:
+    def selection_sort(self, arr: List) -> List:
         for i in range(len(arr)):
             min_idx = i
             for j in range(i + 1, len(arr)):
@@ -119,7 +118,7 @@ class sortingAlgorithms:
             self.swaps += 1
         return arr
 
-    def shellSort(self, arr: List) -> List:
+    def shell_sort(self, arr: List) -> List:
         n = len(arr)
         gap = n // 2
         while gap > 0:
@@ -135,7 +134,7 @@ class sortingAlgorithms:
             gap //= 2
         return arr
 
-    def countingSort(self, arr: List) -> List:
+    def counting_sort(self, arr: List) -> List:
         if not arr:
             return arr
         max_val = max(arr)
@@ -152,17 +151,17 @@ class sortingAlgorithms:
             count[arr[i] - min_val] -= 1
         return output
 
-    def radixSort(self, arr: List) -> List:
+    def radix_sort(self, arr: List) -> List:
         if not arr:
             return arr
         max_val = max(arr)
         exp = 1
         while max_val // exp > 0:
-            self._countingSortForRadix(arr, exp)
+            self._counting_sort_for_radix(arr, exp)
             exp *= 10
         return arr
 
-    def _countingSortForRadix(self, arr: List, exp: int) -> None:
+    def _counting_sort_for_radix(self, arr: List, exp: int) -> None:
         n = len(arr)
         output = [0] * n
         count = [0] * 10
@@ -180,7 +179,7 @@ class sortingAlgorithms:
         for i in range(n):
             arr[i] = output[i]
 
-    def bucketSort(self, arr: List) -> List:
+    def bucket_sort(self, arr: List) -> List:
         if not arr:
             return arr
         bucket_count = 10
@@ -188,7 +187,8 @@ class sortingAlgorithms:
         min_val = min(arr)
         buckets = [[] for _ in range(bucket_count)]
         for num in arr:
-            index = int((num - min_val) * bucket_count / (max_val - min_val + 1))
+            index = int((num - min_val) * bucket_count /
+                        (max_val - min_val + 1))
             buckets[index].append(num)
         for bucket in buckets:
             bucket.sort()
@@ -197,7 +197,7 @@ class sortingAlgorithms:
             result.extend(bucket)
         return result
 
-    def cocktailSort(self, arr: List) -> List:
+    def cocktail_sort(self, arr: List) -> List:
         n = len(arr)
         swapped = True
         start = 0
@@ -223,7 +223,7 @@ class sortingAlgorithms:
             start += 1
         return arr
 
-    def combSort(self, arr: List) -> List:
+    def comb_sort(self, arr: List) -> List:
         n = len(arr)
         gap = n
         shrink = 1.3
@@ -243,7 +243,7 @@ class sortingAlgorithms:
                 i += 1
         return arr
 
-    def gnomeSort(self, arr: List) -> List:
+    def gnome_sort(self, arr: List) -> List:
         index = 0
         while index < len(arr):
             if index == 0:
@@ -277,32 +277,34 @@ class SortingBenchmark:
     def benchmark_algorithm(self, algo_name: str, sort_func,
                             arr: List) -> dict:
         test_arr = copy.deepcopy(arr)
-        sorter = sortingAlgorithms(test_arr)
+        sorter = SortingAlgorithms(test_arr)
         start_time = time.time()
-        if algo_name == "quickSort":
+        if algo_name == "quick_sort":
             sort_func(sorter, test_arr, 0, len(test_arr) - 1)
         else:
             result = sort_func(sorter, test_arr)
         end_time = time.time()
         comparisons, swaps = sorter.get_stats()
-        return {"time": end_time - start_time,
-                "comparisons": comparisons,
-                "swaps": swaps}
+        return {
+            "time": end_time - start_time,
+            "comparisons": comparisons,
+            "swaps": swaps
+        }
 
     def run_benchmarks(self, array_size: int = 100) -> None:
         test_array = self.generate_random_array(array_size)
-        sorter = sortingAlgorithms()
+        sorter = SortingAlgorithms()
         algorithms = {
-            "BubbleSort": sorter.BubbleSort,
-            "QuickSort": sorter.quickSort,
-            "MergeSort": sorter.mergeSort,
-            "HeapSort": sorter.heapSort,
-            "InsertionSort": sorter.insertionSort,
-            "SelectionSort": sorter.selectionSort,
-            "ShellSort": sorter.shellSort,
-            "CocktailSort": sorter.cocktailSort,
-            "CombSort": sorter.combSort,
-            "GnomeSort": sorter.gnomeSort
+            "bubble_sort": sorter.bubble_sort,
+            "quick_sort": sorter.quick_sort,
+            "merge_sort": sorter.merge_sort,
+            "heap_sort": sorter.heap_sort,
+            "insertion_sort": sorter.insertion_sort,
+            "selection_sort": sorter.selection_sort,
+            "shell_sort": sorter.shell_sort,
+            "cocktail_sort": sorter.cocktail_sort,
+            "comb_sort": sorter.comb_sort,
+            "gnome_sort": sorter.gnome_sort
         }
         print(f"Running benchmarks on array of size {array_size}...")
         for name, func in algorithms.items():
@@ -319,15 +321,15 @@ def main():
     print("=== Sorting Algorithms Implementation ===")
     test_data = [64, 34, 25, 12, 22, 11, 90, 88, 45, 50, 23, 67, 89, 100, 1]
     print(f"Original array: {test_data}")
-    sorter = sortingAlgorithms()
-    bubble_result = sorter.BubbleSort(copy.deepcopy(test_data))
+    sorter = SortingAlgorithms()
+    bubble_result = sorter.bubble_sort(copy.deepcopy(test_data))
     print(f"Bubble Sort: {bubble_result}")
     sorter.reset_stats()
-    merge_result = sorter.mergeSort(copy.deepcopy(test_data))
+    merge_result = sorter.merge_sort(copy.deepcopy(test_data))
     print(f"Merge Sort: {merge_result}")
     sorter.reset_stats()
     quick_data = copy.deepcopy(test_data)
-    sorter.quickSort(quick_data, 0, len(quick_data) - 1)
+    sorter.quick_sort(quick_data, 0, len(quick_data) - 1)
     print(f"Quick Sort: {quick_data}")
     benchmark = SortingBenchmark()
     benchmark.run_benchmarks(50)
