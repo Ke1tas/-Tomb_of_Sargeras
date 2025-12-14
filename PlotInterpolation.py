@@ -8,7 +8,7 @@ def plot_interpolation(
         y_nodes: np.ndarray,
         x_eval: np.ndarray,
         y_eval: np.ndarray,
-        P_func: Callable,
+        poly_func: Callable,
         figsize: Tuple[int, int] = (7, 4),
         show: bool = True
 ) -> None:
@@ -20,12 +20,12 @@ def plot_interpolation(
         y_nodes: Значения в узлах
         x_eval: Точки оценки
         y_eval: Значения в точках оценки
-        P_func: Числовая функция полинома
+        poly_func: Числовая функция полинома
         figsize: Размер фигуры
         show: Показать ли график
     """
     x_plot = np.linspace(x_nodes.min(), x_nodes.max(), 200)
-    y_plot = P_func(x_plot)
+    y_plot = poly_func(x_plot)
 
     plt.figure(figsize=figsize)
     plt.plot(x_plot, y_plot, 'k-', linewidth=1.5, label='P(x)')

@@ -26,17 +26,17 @@ def main():
     )
 
     print("\n[1] Построение многочлена Лагранжа...")
-    P, P_expanded = build_lagrange_polynomial(
+    poly_simplified, poly_expanded = build_lagrange_polynomial(
         interpolation_config.x_nodes,
         interpolation_config.y_nodes,
         x
     )
 
-    print(f"P(x) = {P_expanded}")
+    print(f"P(x) = {poly_expanded}")
 
     print("\n[2] Вычисление значений в заданных точках...")
-    P_func, y_eval = evaluate_polynomial(
-        P_expanded,
+    poly_func, y_eval = evaluate_polynomial(
+        poly_expanded,
         interpolation_config.x_eval,
         x
     )
@@ -51,7 +51,7 @@ def main():
         interpolation_config.y_nodes,
         interpolation_config.x_eval,
         y_eval,
-        P_func
+        poly_func
     )
 
     print("\n" + "=" * 70)
@@ -73,21 +73,21 @@ def main():
     print(f"Требуемая точность: ε = {integration_config.epsilon}")
 
     print("\n[1] Оценка оптимального шага...")
-    M = estimate_max_derivative(
+    max_deriv_val = estimate_max_derivative(
         f, x,
         integration_config.a,
         integration_config.b,
         deriv_order=2
     )
-    L = abs(integration_config.b - integration_config.a)
-    h_raw = math.sqrt(12 * integration_config.epsilon / (M * L))
+    length = abs(integration_config.b - integration_config.a)
+    h_raw = math.sqrt(12 * integration_config.epsilon / (max_deriv_val * length))
 
     print(f"Вторая производная: f''(x) = 2·ln(x) + 3")
-    print(f"Оценка максимума: M = {M:.6f}")
+    print(f"Оценка максимума: M = {max_deriv_val:.6f}")
     print(f"Теоретический h = {h_raw:.6f}")
 
     result = find_optimal_steps(
-        M,
+        max_deriv_val,
         integration_config.a,
         integration_config.b,
         integration_config.epsilon,
@@ -99,38 +99,38 @@ def main():
               f"удовлетворяющий точности ε = {integration_config.epsilon}")
         return
 
-    N_opt, h_opt, err_opt = result
-    N_2h = N_opt // 2
+    n_opt, h_opt, err_opt = result
+    n_2h = n_opt // 2
 
     print(f"\nОптимальные параметры:")
-    print(f"  N = {N_opt} (кратно 4)")
+    print(f"  N = {n_opt} (кратно 4)")
     print(f"  h = {h_opt:.6f}")
     print(f"  Оценка погрешности: {err_opt:.3e}")
 
     print("\n[2] Вычисление интегралов по формуле Симпсона...")
-    I_2h = simpson_rule(f_num, integration_config.a, integration_config.b, N_2h)
-    I_h = simpson_rule(f_num, integration_config.a, integration_config.b, N_opt)
+    i_2h = simpson_rule(f_num, integration_config.a, integration_config.b, n_2h)
+    i_h = simpson_rule(f_num, integration_config.a, integration_config.b, n_opt)
 
-    print(f"\nШаг 2h (N = {N_2h}): I_2h = {I_2h:.10f}")
-    print(f"Шаг h  (N = {N_opt}): I_h  = {I_h:.10f}")
+    print(f"\nШаг 2h (N = {n_2h}): I_2h = {i_2h:.10f}")
+    print(f"Шаг h  (N = {n_opt}): I_h  = {i_h:.10f}")
 
     print("\n[3] Уточнение по правилу Рунге...")
-    I_refined, err_runge = apply_runge_rule(I_h, I_2h, order=4)
+    i_refined, err_runge = apply_runge_rule(i_h, i_2h, order=4)
 
-    print(f"Уточнённое значение: I_refined = {I_refined:.10f}")
+    print(f"Уточнённое значение: I_refined = {i_refined:.10f}")
     print(f"Оценка погрешности: {err_runge:.3e}")
 
     print("\n[4] Точное значение по Ньютону–Лейбницу...")
-    F = x ** 3 / 3 * sp.log(x) - x ** 3 / 9
-    I_exact = compute_exact_integral(F, x, integration_config.a, integration_config.b)
+    f_antideriv = x ** 3 / 3 * sp.log(x) - x ** 3 / 9
+    i_exact = compute_exact_integral(f_antideriv, x, integration_config.a, integration_config.b)
 
     print(f"Первообразная: F(x) = x³/3·ln(x) - x³/9")
-    print(f"Точное значение: I_exact = {I_exact:.10f}")
+    print(f"Точное значение: I_exact = {i_exact:.10f}")
 
     print("\n[5] Сравнение приближённых значений с точным:")
-    abs_err_2h = abs(I_2h - I_exact)
-    abs_err_h = abs(I_h - I_exact)
-    abs_err_refined = abs(I_refined - I_exact)
+    abs_err_2h = abs(i_2h - i_exact)
+    abs_err_h = abs(i_h - i_exact)
+    abs_err_refined = abs(i_refined - i_exact)
 
     print(f"\n  |I_2h - I_exact|      = {abs_err_2h:.3e}")
     print(f"  |I_h - I_exact|       = {abs_err_h:.3e}")

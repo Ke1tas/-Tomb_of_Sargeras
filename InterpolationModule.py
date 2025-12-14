@@ -20,23 +20,23 @@ def build_lagrange_polynomial(
         Кортеж (базовый полином, развёрнутый полином)
     """
     n = len(x_nodes)
-    P = 0
+    poly = 0
 
     for i in range(n):
-        Li = 1
+        poly_term = 1
         for j in range(n):
             if i != j:
-                Li *= (sym_x - x_nodes[j]) / (x_nodes[i] - x_nodes[j])
-        P += y_nodes[i] * Li
+                poly_term *= (sym_x - x_nodes[j]) / (x_nodes[i] - x_nodes[j])
+        poly += y_nodes[i] * poly_term
 
-    P_simplified = sp.simplify(P)
-    P_expanded = sp.expand(P_simplified)
+    poly_simplified = sp.simplify(poly)
+    poly_expanded = sp.expand(poly_simplified)
 
-    return P_simplified, P_expanded
+    return poly_simplified, poly_expanded
 
 
 def evaluate_polynomial(
-        P_expanded: sp.Expr,
+        poly_expanded: sp.Expr,
         x_eval: np.ndarray,
         sym_x: sp.Symbol
 ) -> Tuple[Callable, np.ndarray]:
@@ -44,13 +44,13 @@ def evaluate_polynomial(
     Вычисляет значения многочлена в точках.
 
     Args:
-        P_expanded: Развёрнутый символический полином
+        poly_expanded: Развёрнутый символический полином
         x_eval: Точки для вычисления
         sym_x: Символическая переменная
 
     Returns:
         Кортеж (числовая функция, значения в точках)
     """
-    P_func = sp.lambdify(sym_x, P_expanded, 'numpy')
-    y_eval = P_func(x_eval)
-    return P_func, y_eval
+    poly_func = sp.lambdify(sym_x, poly_expanded, 'numpy')
+    y_eval = poly_func(x_eval)
+    return poly_func, y_eval
