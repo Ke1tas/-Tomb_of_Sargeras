@@ -1,10 +1,19 @@
-from dataclasses import dataclass
-from typing import Tuple, Callable, Optional
+# ============================================================================
+# Numerical Methods: Lagrange Interpolation & Simpson's Integration
+# ============================================================================
+"""
+Модуль для работы с численными методами:
+- Интерполяция многочлена Лагранжа
+- Численное интегрирование по формуле Симпсона
+- Оценка погрешностей по правилу Рунге
+"""
 
 import sympy as sp
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from typing import Tuple, Callable, Optional
+from dataclasses import dataclass
 
 
 # ============================================================================
@@ -43,7 +52,6 @@ class IntegrationConfig:
 # ============================================================================
 # Interpolation Module
 # ============================================================================
-
 
 def build_lagrange_polynomial(
         x_nodes: np.ndarray,
@@ -140,7 +148,6 @@ def plot_interpolation(
 # ============================================================================
 #  Integration Module
 # ============================================================================
-
 
 def estimate_max_derivative(
         f: sp.Expr,
