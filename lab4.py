@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Tuple, Callable, Optional
 
 import sympy as sp
@@ -5,13 +6,60 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
+
+# ============================================================================
+# Constants and Configuration
+# ============================================================================
+
+@dataclass
+class InterpolationConfig:
+    """Конфигурация для интерполяции Лагранжа."""
+    x_nodes: np.ndarray
+    y_nodes: np.ndarray
+    x_eval: np.ndarray
+
+    def __post_init__(self):
+        if len(self.x_nodes) != len(self.y_nodes):
+            raise ValueError("x_nodes и y_nodes должны иметь одинаковую длину")
+        if len(self.x_nodes) < 2:
+            raise ValueError("Требуется минимум 2 узла интерполяции")
+
+
+@dataclass
+class IntegrationConfig:
+    """Конфигурация для численного интегрирования."""
+    a: float
+    b: float
+    epsilon: float = 1e-6
+    max_n: int = 400
+
+    def __post_init__(self):
+        if self.a >= self.b:
+            raise ValueError("Левая граница должна быть меньше правой")
+        if self.epsilon <= 0:
+            raise ValueError("Точность должна быть положительной")
+
+
 # -----------------------------
 # 1. Исходные данные
 # -----------------------------
-x_nodes = np.array([0.35, 0.41, 0.47, 0.51, 0.56, 0.64], dtype=float)
-y_nodes = np.array([2.73951, 2.30080, 1.96864, 1.78776, 1.59502, 1.34310], dtype=float)
 
-x_eval = np.array([0.526, 0.453, 0.482, 0.552, 0.436], dtype=float)
+interpolation_config = InterpolationConfig(
+    x_nodes=np.array([0.35, 0.41, 0.47, 0.51, 0.56, 0.64], dtype=float),
+    y_nodes=np.array([2.73951, 2.30080, 1.96864, 1.78776, 1.59502, 1.34310], dtype=float),
+    x_eval=np.array([0.526, 0.453, 0.482, 0.552, 0.436], dtype=float)
+)
+integration_config = IntegrationConfig(
+    a=0.35,
+    b=0.64,
+    epsilon=1e-6,
+    max_n=400
+)
+
+# x_nodes = np.array([0.35, 0.41, 0.47, 0.51, 0.56, 0.64], dtype=float)
+# y_nodes = np.array([2.73951, 2.30080, 1.96864, 1.78776, 1.59502, 1.34310], dtype=float)
+#
+# x_eval = np.array([0.526, 0.453, 0.482, 0.552, 0.436], dtype=float)
 
 # символьная переменная
 x = sp.symbols('x')
@@ -24,6 +72,7 @@ x = sp.symbols('x')
 # -----------------------------
 # 2. Построение многочлена Лагранжа (символьно)
 # -----------------------------
+
 def build_lagrange_polynomial(
         x_nodes: np.ndarray,
         y_nodes: np.ndarray,
@@ -56,7 +105,7 @@ def build_lagrange_polynomial(
     return P_simplified, P_expanded
 
 
-poly = build_lagrange_polynomial(x_nodes, y_nodes, x)
+poly = build_lagrange_polynomial(interpolation_config.x_nodes, interpolation_config.y_nodes, x)
 print("Многочлен Лагранжа P(x) =", poly[1])
 
 
@@ -84,9 +133,9 @@ def evaluate_polynomial(
     return P_func, y_eval
 
 
-evaluate_tuple = evaluate_polynomial(poly[1], x_eval, x)
+evaluate_tuple = evaluate_polynomial(poly[1], interpolation_config.x_eval, x)
 print("\nЗначения интерполяционного многочлена в заданных точках:")
-for xv, yv in zip(x_eval, evaluate_tuple[1]):
+for xv, yv in zip(interpolation_config.x_eval, evaluate_tuple[1]):
     print(f"x = {xv:.3f}, P(x) = {yv:.6f}")
 
 
@@ -133,11 +182,11 @@ def plot_interpolation(
         plt.show()
 
 
-plot_interpolation(x_nodes, y_nodes, x_eval, evaluate_tuple[1], evaluate_tuple[0])
+plot_interpolation(interpolation_config.x_nodes, interpolation_config.y_nodes, interpolation_config.x_eval, evaluate_tuple[1], evaluate_tuple[0])
 
 
 # ============================================================================
-# 3. Integration Module
+#  Integration Module
 # ============================================================================
 
 # -----------------------------
@@ -177,15 +226,15 @@ def estimate_max_derivative(
 
 
 f = x ** 2 * sp.log(x)
-a, b = 0.35, 0.64
-eps = 1e-6
+# a, b = 0.35, 0.64
+# eps = 1e-6
 
-M = estimate_max_derivative(f, x, a, b, 2, 1000)
+M = estimate_max_derivative(f, x, integration_config.a, integration_config.b, 2)
 print("Оценка M =", M)
 
 # неравенство: M * |b-a| * h^2 / 12 < eps
-L = abs(b - a)
-h_raw = math.sqrt(12 * eps / (M * L))
+L = abs(integration_config.b - integration_config.a)
+h_raw = math.sqrt(12 * integration_config.epsilon / (M * L))
 print("h из неравенства (до учёта кратности 4):", h_raw)
 
 
@@ -227,7 +276,7 @@ def find_optimal_steps(
 # учитывать, что (b-a) делится на число шагов, кратное 4:
 # N = (b-a)/h, N должно быть кратно 4
 # пройдём по нескольким N, кратным 4, и выберем подходящее
-N_candidates = find_optimal_steps(M, a, b, eps, 400)
+N_candidates = find_optimal_steps(M, integration_config.a, integration_config.b, integration_config.epsilon, integration_config.max_n)
 
 if N_candidates:
     N_opt, h_opt, err_opt = N_candidates
@@ -285,8 +334,8 @@ f_num = sp.lambdify(x, f, 'numpy')
 N_h = N_opt  # число подинтервалов для шага h
 N_2h = N_h // 2  # для шага 2h
 
-I_2h = simpson_rule(f_num, a, b, N_2h)
-I_h = simpson_rule(f_num, a, b, N_h)
+I_2h = simpson_rule(f_num, integration_config.a, integration_config.b, N_2h)
+I_h = simpson_rule(f_num, integration_config.a, integration_config.b, N_h)
 
 print(f"\nИнтеграл Симпсона с шагом 2h (N={N_2h}): I_2h = {I_2h:.10f}")
 print(f"Интеграл Симпсона с шагом h  (N={N_h}): I_h  = {I_h:.10f}")
@@ -356,7 +405,7 @@ def compute_exact_integral(
 
 
 F = x ** 3 / 3 * sp.log(x) - x ** 3 / 9
-I_exact = compute_exact_integral(F, x, a, b)
+I_exact = compute_exact_integral(F, x, integration_config.a, integration_config.b)
 
 print(f"\nТочный интеграл по формуле Ньютона–Лейбница: I_exact = {I_exact:.10f}")
 
