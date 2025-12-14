@@ -40,38 +40,10 @@ class IntegrationConfig:
             raise ValueError("Точность должна быть положительной")
 
 
-# -----------------------------
-# 1. Исходные данные
-# -----------------------------
-
-interpolation_config = InterpolationConfig(
-    x_nodes=np.array([0.35, 0.41, 0.47, 0.51, 0.56, 0.64], dtype=float),
-    y_nodes=np.array([2.73951, 2.30080, 1.96864, 1.78776, 1.59502, 1.34310], dtype=float),
-    x_eval=np.array([0.526, 0.453, 0.482, 0.552, 0.436], dtype=float)
-)
-integration_config = IntegrationConfig(
-    a=0.35,
-    b=0.64,
-    epsilon=1e-6,
-    max_n=400
-)
-
-# x_nodes = np.array([0.35, 0.41, 0.47, 0.51, 0.56, 0.64], dtype=float)
-# y_nodes = np.array([2.73951, 2.30080, 1.96864, 1.78776, 1.59502, 1.34310], dtype=float)
-#
-# x_eval = np.array([0.526, 0.453, 0.482, 0.552, 0.436], dtype=float)
-
-# символьная переменная
-x = sp.symbols('x')
-
-
 # ============================================================================
 # Interpolation Module
 # ============================================================================
 
-# -----------------------------
-# 2. Построение многочлена Лагранжа (символьно)
-# -----------------------------
 
 def build_lagrange_polynomial(
         x_nodes: np.ndarray,
@@ -105,13 +77,6 @@ def build_lagrange_polynomial(
     return P_simplified, P_expanded
 
 
-poly = build_lagrange_polynomial(interpolation_config.x_nodes, interpolation_config.y_nodes, x)
-print("Многочлен Лагранжа P(x) =", poly[1])
-
-
-# -----------------------------
-# 3. Вычисление значений P(x) в заданных точках
-# -----------------------------
 def evaluate_polynomial(
         P_expanded: sp.Expr,
         x_eval: np.ndarray,
@@ -132,16 +97,6 @@ def evaluate_polynomial(
     y_eval = P_func(x_eval)
     return P_func, y_eval
 
-
-evaluate_tuple = evaluate_polynomial(poly[1], interpolation_config.x_eval, x)
-print("\nЗначения интерполяционного многочлена в заданных точках:")
-for xv, yv in zip(interpolation_config.x_eval, evaluate_tuple[1]):
-    print(f"x = {xv:.3f}, P(x) = {yv:.6f}")
-
-
-# -----------------------------
-# 4. График P(x), узлы и предсказанные значения
-# -----------------------------
 
 def plot_interpolation(
         x_nodes: np.ndarray,
@@ -182,17 +137,10 @@ def plot_interpolation(
         plt.show()
 
 
-plot_interpolation(interpolation_config.x_nodes, interpolation_config.y_nodes, interpolation_config.x_eval, evaluate_tuple[1], evaluate_tuple[0])
-
-
 # ============================================================================
 #  Integration Module
 # ============================================================================
 
-# -----------------------------
-# 5. Оценка шага h из условия M*|b-a|*h^2/12 < eps
-#    для f(x) = x^2 ln(x)
-# -----------------------------
 
 def estimate_max_derivative(
         f: sp.Expr,
@@ -223,19 +171,6 @@ def estimate_max_derivative(
     M = np.max(np.abs(f_deriv_func(x_test)))
 
     return M
-
-
-f = x ** 2 * sp.log(x)
-# a, b = 0.35, 0.64
-# eps = 1e-6
-
-M = estimate_max_derivative(f, x, integration_config.a, integration_config.b, 2)
-print("Оценка M =", M)
-
-# неравенство: M * |b-a| * h^2 / 12 < eps
-L = abs(integration_config.b - integration_config.a)
-h_raw = math.sqrt(12 * integration_config.epsilon / (M * L))
-print("h из неравенства (до учёта кратности 4):", h_raw)
 
 
 def find_optimal_steps(
@@ -273,21 +208,6 @@ def find_optimal_steps(
     return None
 
 
-# учитывать, что (b-a) делится на число шагов, кратное 4:
-# N = (b-a)/h, N должно быть кратно 4
-# пройдём по нескольким N, кратным 4, и выберем подходящее
-N_candidates = find_optimal_steps(M, integration_config.a, integration_config.b, integration_config.epsilon, integration_config.max_n)
-
-if N_candidates:
-    N_opt, h_opt, err_opt = N_candidates
-    print(f"\nВыбран N = {N_opt} (кратно 4), шаг h = {h_opt}, оценка погрешности ≈ {err_opt}")
-else:
-    print("\nНе найден N до 400, удовлетворяющий заданной точности eps.")
-
-
-# -----------------------------
-# 6. Интеграл по формуле Симпсона с шагами 2h и h
-# -----------------------------
 def simpson_rule(
         f_num: Callable,
         a: float,
@@ -327,23 +247,6 @@ def simpson_rule(
     return S
 
 
-# функция f(x) = x^2 ln(x) как числовая
-f_num = sp.lambdify(x, f, 'numpy')
-
-# возьмём N, кратное 4 и чётное (это уже выполнено), для шага h_opt:
-N_h = N_opt  # число подинтервалов для шага h
-N_2h = N_h // 2  # для шага 2h
-
-I_2h = simpson_rule(f_num, integration_config.a, integration_config.b, N_2h)
-I_h = simpson_rule(f_num, integration_config.a, integration_config.b, N_h)
-
-print(f"\nИнтеграл Симпсона с шагом 2h (N={N_2h}): I_2h = {I_2h:.10f}")
-print(f"Интеграл Симпсона с шагом h  (N={N_h}): I_h  = {I_h:.10f}")
-
-
-# -----------------------------
-# 7. Уточнённое значение по правилу Рунге (Simpson, порядок 4)
-# -----------------------------
 def apply_runge_rule(
         I_h: float,
         I_2h: float,
@@ -370,19 +273,6 @@ def apply_runge_rule(
     return I_refined, error_estimate
 
 
-# Для формулы Симпсона глобальная погрешность ~ C * h^4,
-# значит уточнение по Рунге:
-# I_refined = I_h + (I_h - I_2h)/(2^4 - 1) = I_h + (I_h - I_2h)/15
-I_refined, err_Runge_est = apply_runge_rule(I_h, I_2h, 4)
-
-print(f"\nУточнённое значение по Рунге: I_refined = {I_refined:.10f}")
-print(f"Оценка погрешности по Рунге |I_refined - I_h| ≈ {err_Runge_est:.3e}")
-
-
-# -----------------------------
-# 8. Точный интеграл по Ньютону–Лейбницу
-#    F(x) = x^3/3 * ln(x) - x^3/9
-# -----------------------------
 def compute_exact_integral(
         F: sp.Expr,
         sym_x: sp.Symbol,
@@ -404,19 +294,154 @@ def compute_exact_integral(
     return float(sp.N(F.subs(sym_x, b) - F.subs(sym_x, a)))
 
 
-F = x ** 3 / 3 * sp.log(x) - x ** 3 / 9
-I_exact = compute_exact_integral(F, x, integration_config.a, integration_config.b)
+# ============================================================================
+# Main Execution
+# ============================================================================
 
-print(f"\nТочный интеграл по формуле Ньютона–Лейбница: I_exact = {I_exact:.10f}")
+def main():
+    """Основная функция исполнения."""
 
-# -----------------------------
-# 9. Сравнение значений
-# -----------------------------
-abs_err_2h = abs(I_2h - I_exact)
-abs_err_h = abs(I_h - I_exact)
-abs_err_refined = abs(I_refined - I_exact)
+    # Инициализация символьной переменной
+    x = sp.symbols('x')
 
-print("\nСравнение приближённых значений с точным:")
-print(f"|I_2h      - I_exact| = {abs_err_2h:.3e}")
-print(f"|I_h       - I_exact| = {abs_err_h:.3e}")
-print(f"|I_refined - I_exact| = {abs_err_refined:.3e}")
+    # ===== Часть 1: Интерполяция Лагранжа =====
+    print("=" * 70)
+    print("ЗАДАЧА 1: ИНТЕРПОЛЯЦИЯ МНОГОЧЛЕНОМ ЛАГРАНЖА")
+    print("=" * 70)
+
+    # Конфигурация интерполяции
+    interpolation_config = InterpolationConfig(
+        x_nodes=np.array([0.35, 0.41, 0.47, 0.51, 0.56, 0.64], dtype=float),
+        y_nodes=np.array([2.73951, 2.30080, 1.96864, 1.78776, 1.59502, 1.34310], dtype=float),
+        x_eval=np.array([0.526, 0.453, 0.482, 0.552, 0.436], dtype=float)
+    )
+
+    # Построение полинома
+    print("\n[1] Построение многочлена Лагранжа...")
+    P, P_expanded = build_lagrange_polynomial(
+        interpolation_config.x_nodes,
+        interpolation_config.y_nodes,
+        x
+    )
+
+    print(f"P(x) = {P_expanded}")
+
+    # Вычисление значений
+    print("\n[2] Вычисление значений в заданных точках...")
+    P_func, y_eval = evaluate_polynomial(
+        P_expanded,
+        interpolation_config.x_eval,
+        x
+    )
+
+    print("\nЗначения интерполяционного многочлена:")
+    for xv, yv in zip(interpolation_config.x_eval, y_eval):
+        print(f"  x = {xv:.3f}, P(x) = {yv:.6f}")
+
+    # Визуализация
+    print("\n[3] Построение графика интерполяции...")
+    plot_interpolation(
+        interpolation_config.x_nodes,
+        interpolation_config.y_nodes,
+        interpolation_config.x_eval,
+        y_eval,
+        P_func
+    )
+
+    # ===== Часть 2: Численное интегрирование =====
+    print("\n" + "=" * 70)
+    print("ЗАДАЧА 2: ЧИСЛЕННОЕ ИНТЕГРИРОВАНИЕ (f(x) = x² ln(x))")
+    print("=" * 70)
+
+    # Конфигурация интегрирования
+    integration_config = IntegrationConfig(
+        a=0.35,
+        b=0.64,
+        epsilon=1e-6,
+        max_n=400
+    )
+
+    # Определение функции
+    f = x ** 2 * sp.log(x)
+    f_num = sp.lambdify(x, f, 'numpy')
+
+    print(f"\nФункция: f(x) = x² ln(x)")
+    print(f"Интервал: [{integration_config.a}, {integration_config.b}]")
+    print(f"Требуемая точность: ε = {integration_config.epsilon}")
+
+    # Оценка шага
+    print("\n[1] Оценка оптимального шага...")
+    M = estimate_max_derivative(
+        f, x,
+        integration_config.a,
+        integration_config.b,
+        deriv_order=2
+    )
+    L = abs(integration_config.b - integration_config.a)
+    h_raw = math.sqrt(12 * integration_config.epsilon / (M * L))
+
+    print(f"Вторая производная: f''(x) = 2·ln(x) + 3")
+    print(f"Оценка максимума: M = {M:.6f}")
+    print(f"Теоретический h = {h_raw:.6f}")
+
+    result = find_optimal_steps(
+        M,
+        integration_config.a,
+        integration_config.b,
+        integration_config.epsilon,
+        integration_config.max_n
+    )
+
+    if result is None:
+        print(f"\n⚠ Не найден N до {integration_config.max_n}, "
+              f"удовлетворяющий точности ε = {integration_config.epsilon}")
+        return
+
+    N_opt, h_opt, err_opt = result
+    N_2h = N_opt // 2
+
+    print(f"\nОптимальные параметры:")
+    print(f"  N = {N_opt} (кратно 4)")
+    print(f"  h = {h_opt:.6f}")
+    print(f"  Оценка погрешности: {err_opt:.3e}")
+
+    # Вычисление интегралов
+    print("\n[2] Вычисление интегралов по формуле Симпсона...")
+    I_2h = simpson_rule(f_num, integration_config.a, integration_config.b, N_2h)
+    I_h = simpson_rule(f_num, integration_config.a, integration_config.b, N_opt)
+
+    print(f"\nШаг 2h (N = {N_2h}): I_2h = {I_2h:.10f}")
+    print(f"Шаг h  (N = {N_opt}): I_h  = {I_h:.10f}")
+
+    # Уточнение по Рунге
+    print("\n[3] Уточнение по правилу Рунге...")
+    I_refined, err_runge = apply_runge_rule(I_h, I_2h, order=4)
+
+    print(f"Уточнённое значение: I_refined = {I_refined:.10f}")
+    print(f"Оценка погрешности: {err_runge:.3e}")
+
+    # Точное значение
+    print("\n[4] Точное значение по Ньютону–Лейбницу...")
+    F = x ** 3 / 3 * sp.log(x) - x ** 3 / 9
+    I_exact = compute_exact_integral(F, x, integration_config.a, integration_config.b)
+
+    print(f"Первообразная: F(x) = x³/3·ln(x) - x³/9")
+    print(f"Точное значение: I_exact = {I_exact:.10f}")
+
+    # Сравнение
+    print("\n[5] Сравнение приближённых значений с точным:")
+    abs_err_2h = abs(I_2h - I_exact)
+    abs_err_h = abs(I_h - I_exact)
+    abs_err_refined = abs(I_refined - I_exact)
+
+    print(f"\n  |I_2h - I_exact|      = {abs_err_2h:.3e}")
+    print(f"  |I_h - I_exact|       = {abs_err_h:.3e}")
+    print(f"  |I_refined - I_exact| = {abs_err_refined:.3e}")
+
+    print(f"\nОптимизация точности: {abs_err_refined / abs_err_2h:.1f}x")
+
+    print("\n" + "=" * 70)
+
+
+if __name__ == "__main__":
+    main()
