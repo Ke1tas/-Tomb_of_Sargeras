@@ -1,4 +1,4 @@
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Optional
 
 import sympy as sp
 import numpy as np
@@ -20,7 +20,6 @@ x = sp.symbols('x')
 # ============================================================================
 # Interpolation Module
 # ============================================================================
-
 
 # -----------------------------
 # 2. Построение многочлена Лагранжа (символьно)
@@ -136,22 +135,52 @@ def plot_interpolation(
 
 plot_interpolation(x_nodes, y_nodes, x_eval, evaluate_tuple[1], evaluate_tuple[0])
 
+
+# ============================================================================
+# 3. Integration Module
+# ============================================================================
+
 # -----------------------------
 # 5. Оценка шага h из условия M*|b-a|*h^2/12 < eps
 #    для f(x) = x^2 ln(x)
 # -----------------------------
+
+def estimate_max_derivative(
+        f: sp.Expr,
+        sym_x: sp.Symbol,
+        a: float,
+        b: float,
+        deriv_order: int = 1,
+        points: int = 1000
+) -> float:
+    """
+    Оценивает максимум абсолютного значения производной на интервале.
+
+    Args:
+        f: Символическое выражение функции
+        sym_x: Символическая переменная
+        a: Левая граница
+        b: Правая граница
+        deriv_order: Порядок производной
+        points: Количество точек для сетки
+
+    Returns:
+        Максимальное значение модуля производной
+    """
+    f_deriv = sp.diff(f, sym_x, deriv_order)
+    f_deriv_func = sp.lambdify(sym_x, f_deriv, 'numpy')
+
+    x_test = np.linspace(a, b, points)
+    M = np.max(np.abs(f_deriv_func(x_test)))
+
+    return M
+
+
+f = x ** 2 * sp.log(x)
 a, b = 0.35, 0.64
 eps = 1e-6
 
-f = x ** 2 * sp.log(x)
-f2 = sp.diff(f, x, 2)  # f''(x) = 2 ln(x) + 3
-print("\nВторая производная f''(x) =", f2)
-
-f2_func = sp.lambdify(x, f2, 'numpy')
-
-# искать максимум |f''(x)| на [a,b] по сетке
-xx_test = np.linspace(a, b, 1000)
-M = np.max(np.abs(f2_func(xx_test)))
+M = estimate_max_derivative(f, x, a, b, 2, 1000)
 print("Оценка M =", M)
 
 # неравенство: M * |b-a| * h^2 / 12 < eps
@@ -159,18 +188,49 @@ L = abs(b - a)
 h_raw = math.sqrt(12 * eps / (M * L))
 print("h из неравенства (до учёта кратности 4):", h_raw)
 
+
+def find_optimal_steps(
+        M: float,
+        a: float,
+        b: float,
+        epsilon: float,
+        max_n: int = 400
+) -> Optional[Tuple[int, float, float]]:
+    """
+    Находит оптимальное число шагов N для метода Симпсона.
+
+    Условие: M * |b-a| * h^2 / 12 < epsilon
+    где h = (b-a) / N, N кратно 4
+
+    Args:
+        M: Оценка максимума второй производной
+        a: Левая граница
+        b: Правая граница
+        epsilon: Требуемая точность
+        max_n: Максимальное значение N
+
+    Returns:
+        Кортеж (N, h, error_estimate) или None
+    """
+    L = abs(b - a)
+
+    for N in range(4, max_n + 1, 4):
+        h = L / N
+        err_est = M * L * h ** 2 / 12
+
+        if err_est < epsilon:
+            return N, h, err_est
+
+    return None
+
+
 # учитывать, что (b-a) делится на число шагов, кратное 4:
 # N = (b-a)/h, N должно быть кратно 4
 # пройдём по нескольким N, кратным 4, и выберем подходящее
-N_candidates = []
-for N in range(4, 401, 4):  # до 400 частей, шаг кратен 4
-    h_candidate = (b - a) / N
-    err_est = M * L * h_candidate ** 2 / 12
-    if err_est < eps:
-        N_candidates.append((N, h_candidate, err_est))
+N_candidates = find_optimal_steps(M, a, b, eps, 400)
 
 if N_candidates:
-    N_opt, h_opt, err_opt = N_candidates[0]  # первый удовлетворяющий
+    N_opt, h_opt, err_opt = N_candidates
     print(f"\nВыбран N = {N_opt} (кратно 4), шаг h = {h_opt}, оценка погрешности ≈ {err_opt}")
 else:
     print("\nНе найден N до 400, удовлетворяющий заданной точности eps.")
@@ -179,20 +239,42 @@ else:
 # -----------------------------
 # 6. Интеграл по формуле Симпсона с шагами 2h и h
 # -----------------------------
-def simpson(f_num, a, b, N):
+def simpson_rule(
+        f_num: Callable,
+        a: float,
+        b: float,
+        N: int
+) -> float:
     """
-    Композитная формула Симпсона.
-    N - число подинтервалов (должно быть чётным).
+    Вычисляет определённый интеграл по композитной формуле Симпсона.
+
+    Args:
+        f_num: Числовая функция
+        a: Левая граница
+        b: Правая граница
+        N: Число подинтервалов (должно быть чётным)
+
+    Returns:
+        Значение интеграла
+
+    Raises:
+        ValueError: Если N не чётное
     """
     if N % 2 != 0:
-        raise ValueError("N должно быть чётным для формулы Симпсона.")
+        raise ValueError("N должно быть чётным для формулы Симпсона")
+
     h = (b - a) / N
     x_vals = np.linspace(a, b, N + 1)
     y_vals = f_num(x_vals)
-    S = h / 3 * (y_vals[0]
-                 + 4 * np.sum(y_vals[1:-1:2])
-                 + 2 * np.sum(y_vals[2:-1:2])
-                 + y_vals[-1])
+
+    # Формула Симпсона: S = h/3 * (y0 + 4*сумма_нечётных + 2*сумма_чётных + yn)
+    S = h / 3 * (
+            y_vals[0]
+            + 4 * np.sum(y_vals[1:-1:2])
+            + 2 * np.sum(y_vals[2:-1:2])
+            + y_vals[-1]
+    )
+
     return S
 
 
@@ -203,30 +285,78 @@ f_num = sp.lambdify(x, f, 'numpy')
 N_h = N_opt  # число подинтервалов для шага h
 N_2h = N_h // 2  # для шага 2h
 
-I_2h = simpson(f_num, a, b, N_2h)
-I_h = simpson(f_num, a, b, N_h)
+I_2h = simpson_rule(f_num, a, b, N_2h)
+I_h = simpson_rule(f_num, a, b, N_h)
 
 print(f"\nИнтеграл Симпсона с шагом 2h (N={N_2h}): I_2h = {I_2h:.10f}")
 print(f"Интеграл Симпсона с шагом h  (N={N_h}): I_h  = {I_h:.10f}")
 
+
 # -----------------------------
 # 7. Уточнённое значение по правилу Рунге (Simpson, порядок 4)
 # -----------------------------
+def apply_runge_rule(
+        I_h: float,
+        I_2h: float,
+        order: int = 4
+) -> Tuple[float, float]:
+    """
+    Применяет правило Рунге для уточнения интеграла.
+
+    Для формулы порядка O(h^k):
+    I_refined = I_h + (I_h - I_2h) / (2^k - 1)
+
+    Args:
+        I_h: Интеграл с шагом h
+        I_2h: Интеграл с шагом 2h
+        order: Порядок точности метода
+
+    Returns:
+        Кортеж (уточнённое значение, оценка погрешности)
+    """
+    denominator = 2 ** order - 1
+    I_refined = I_h + (I_h - I_2h) / denominator
+    error_estimate = abs(I_refined - I_h)
+
+    return I_refined, error_estimate
+
+
 # Для формулы Симпсона глобальная погрешность ~ C * h^4,
 # значит уточнение по Рунге:
 # I_refined = I_h + (I_h - I_2h)/(2^4 - 1) = I_h + (I_h - I_2h)/15
-I_refined = I_h + (I_h - I_2h) / (2 ** 4 - 1)
-err_Runge_est = abs(I_refined - I_h)
+I_refined, err_Runge_est = apply_runge_rule(I_h, I_2h, 4)
 
 print(f"\nУточнённое значение по Рунге: I_refined = {I_refined:.10f}")
 print(f"Оценка погрешности по Рунге |I_refined - I_h| ≈ {err_Runge_est:.3e}")
+
 
 # -----------------------------
 # 8. Точный интеграл по Ньютону–Лейбницу
 #    F(x) = x^3/3 * ln(x) - x^3/9
 # -----------------------------
+def compute_exact_integral(
+        F: sp.Expr,
+        sym_x: sp.Symbol,
+        a: float,
+        b: float
+) -> float:
+    """
+    Вычисляет точный определённый интеграл по формуле Ньютона–Лейбница.
+
+    Args:
+        F: Первообразная функции
+        sym_x: Символическая переменная
+        a: Левая граница
+        b: Правая граница
+
+    Returns:
+        Значение определённого интеграла
+    """
+    return float(sp.N(F.subs(sym_x, b) - F.subs(sym_x, a)))
+
+
 F = x ** 3 / 3 * sp.log(x) - x ** 3 / 9
-I_exact = sp.N(F.subs(x, b) - F.subs(x, a))
+I_exact = compute_exact_integral(F, x, a, b)
 
 print(f"\nТочный интеграл по формуле Ньютона–Лейбница: I_exact = {I_exact:.10f}")
 
