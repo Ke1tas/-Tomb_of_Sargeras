@@ -17,7 +17,6 @@ class AsymmetricEncryption:
                 backend=default_backend()
             )
             public_key = private_key.public_key()
-            # print("Сгенерирована пара ключей RSA (2048 бит)")
             return private_key, public_key
         except Exception as e:
             raise RuntimeError(f"Ошибка генерации ключей RSA: {str(e)}")
@@ -36,7 +35,6 @@ class AsymmetricEncryption:
                         label=None
                     )
                 ))
-            # print(f"Зашифрованный симметричный ключ сохранен в {encrypted_key_path}")
         except Exception as e:
             raise RuntimeError(f"Ошибка шифрования симметричного ключа: {str(e)}")
 
@@ -67,7 +65,6 @@ class AsymmetricEncryption:
                     label=None
                 )
             )
-            # print("Симметричный ключ успешно расшифрован")
             return symmetric_key
         except Exception as e:
             raise RuntimeError(f"Ошибка дешифрования симметричного ключа: {str(e)}")

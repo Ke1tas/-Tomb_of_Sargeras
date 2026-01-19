@@ -12,7 +12,6 @@ class SymmetricEncryption:
         """Generating a symmetric key"""
         try:
             symmetric_key = secrets.token_bytes(16)
-            # print("Сгенерирован симметричный ключ IDEA (128 бит)")
             return symmetric_key
         except Exception as e:
             raise RuntimeError(f"Ошибка генерации симметричного ключа: {str(e)}")
