@@ -1,0 +1,13 @@
+environment: "dev"
+
+paths:
+  input_file: "text.txt"
+  output_file: "encrypted_text.txt"
+  encrypted_key: "encrypted_key.txt"
+  public_key: "public_key.txt"
+  private_key: "private_key.txt"
+  decrypted_output: "decrypted_text.txt"
+
+debug:
+  enabled: true
+  verbose: true

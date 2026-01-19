@@ -1,0 +1,13 @@
+environment: "prod"
+
+paths:
+  input_file: "/data/input/text.txt"
+  output_file: "/data/output/encrypted_text.txt"
+  encrypted_key: "/data/keys/encrypted_key.txt"
+  public_key: "/data/keys/public_key.pem"
+  private_key: "/data/keys/private_key.pem"
+  decrypted_output: "/data/output/decrypted_text.txt"
+
+debug:
+  enabled: false
+  verbose: false

@@ -15,7 +15,7 @@ class HybridEncryptionSystem:
             symmetric_key = SymmetricEncryption.generate_key()
             private_key, public_key = AsymmetricEncryption.generate_keys()
 
-            AsymmetricEncryption.serialize_keys(
+            FileHandler.serialize_keys(
                 public_key, public_key_path,
                 private_key, private_key_path
             )

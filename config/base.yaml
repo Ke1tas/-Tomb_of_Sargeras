@@ -1,0 +1,17 @@
+# Базовые настройки приложения
+app:
+  name: "Hybrid Encryption System"
+
+environment: "dev"
+
+debug:
+  enabled: true
+  verbose: true
+
+paths:
+  input_text: "text.txt"
+  encrypted_text: "encrypted_text.txt"
+  encrypted_key: "encrypted_key.txt"
+  public_key: "public_key.txt"
+  private_key: "private_key.txt"
+  decrypted_text: "decrypted_text.txt"
