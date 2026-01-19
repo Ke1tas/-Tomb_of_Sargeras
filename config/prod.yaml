@@ -1,12 +1,12 @@
 environment: "prod"
 
 paths:
-  input_file: "/data/input/text.txt"
-  output_file: "/data/output/encrypted_text.txt"
-  encrypted_key: "/data/keys/encrypted_key.txt"
-  public_key: "/data/keys/public_key.pem"
-  private_key: "/data/keys/private_key.pem"
-  decrypted_output: "/data/output/decrypted_text.txt"
+  input_text: "prod/text.txt"
+  encrypted_text: "prod/encrypted_text.txt"
+  encrypted_key: "prod/encrypted_key.txt"
+  public_key: "prod/public_key.txt"
+  private_key: "prod/private_key.txt"
+  decrypted_text: "prod/decrypted_text.txt"
 
 debug:
   enabled: false

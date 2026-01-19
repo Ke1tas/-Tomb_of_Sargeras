@@ -25,27 +25,30 @@ def main():
 
     cfg = load_config(args.config_dir,args.environment)
     paths = cfg.paths
-    app_cfg = cfg.app
     dbg_cfg = cfg.debug
+
+    if dbg_cfg.enabled and dbg_cfg.verbose:
+        print(f"Инициализирована система шифрования: {cfg.app.name}")
+        print(f"Окружение: {cfg.environment}")
 
     try:
         if args.generate_keys:
             # if not all([args.encrypted_key, args.public_key, args.private_key]):
             #     parser.error("Для генерации ключей требуются --encrypted-key, --public-key и --private-key")
             HybridEncryptionSystem.generate_keys(
-                paths.encrypted_key, paths.public_key, paths.private_key
+                paths.encrypted_key, paths.public_key, paths.private_key, dbg_cfg
             )
         elif args.encrypt:
             # if not all([args.input_file, args.private_key, args.encrypted_key, args.output_file]):
             #     parser.error("Для шифрования требуются --input-file, --private-key, --encrypted-key и --output-file")
             HybridEncryptionSystem.encrypt_file(
-                paths.input_text, paths.private_key, paths.encrypted_key, paths.encrypted_text
+                paths.input_text, paths.private_key, paths.encrypted_key, paths.encrypted_text, dbg_cfg
             )
         elif args.decrypt:
             # if not all([args.input_file, args.private_key, args.encrypted_key, args.output_file]):
             #     parser.error("Для дешифрования требуются --input-file, --private-key, --encrypted-key и --output-file")
             HybridEncryptionSystem.decrypt_file(
-                paths.encrypted_text, paths.private_key, paths.encrypted_key, paths.decrypted_text
+                paths.encrypted_text, paths.private_key, paths.encrypted_key, paths.decrypted_text, dbg_cfg
             )
     except Exception as e:
         print(f"Ошибка: {str(e)}")

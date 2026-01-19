@@ -29,5 +29,5 @@ def load_config(config_dir: str = "config",
     env_config = OmegaConf.load(env_config_path)
     config = OmegaConf.merge(base_config, env_config)
 
-    print(f"Конфигурация загружена: {environment}")
+    # print(f"Конфигурация загружена: {environment}")
     return config
